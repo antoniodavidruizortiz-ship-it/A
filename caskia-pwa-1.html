@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#050508">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="CaskIA">
+<title>CaskIA</title>
+<link rel="manifest" id="manifestLink">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+:root {
+  --bg:#050508; --surface:#0d0d14; --surface2:#12121c; --border:#1e1e30;
+  --accent:#7c6aff; --accent2:#a78bfa; --glow:#7c6aff33;
+  --text:#f0eeff; --muted:#4a4a6a; --danger:#f87171; --ok:#34d399; --warn:#facc15;
+  --safe:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;height:100dvh;background:var(--bg);color:var(--text);font-family:'Space Grotesk',sans-serif;overflow:hidden;-webkit-font-smoothing:antialiased}
+body::before{content:'';position:fixed;inset:0;z-index:0;background:radial-gradient(ellipse 80% 50% at 50% -10%,#7c6aff18 0%,transparent 60%),radial-gradient(ellipse 40% 40% at 90% 80%,#a78bfa0a 0%,transparent 50%);animation:bgS 12s ease-in-out infinite alternate}
+@keyframes bgS{0%{opacity:.6;transform:scale(1)}100%{opacity:1;transform:scale(1.05)}}
+#app{position:relative;z-index:1;height:100dvh;display:flex;flex-direction:column}
+
+/* HEADER */
+.header{padding:14px 16px 10px;padding-top:max(14px,env(safe-area-inset-top));display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);background:#05050899;backdrop-filter:blur(20px);flex-shrink:0}
+.logo{width:30px;height:30px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px;box-shadow:0 0 14px var(--glow);margin-right:9px}
+.header-title{font-size:14px;font-weight:600}
+.header-sub{font-size:9px;color:var(--muted);font-family:'JetBrains Mono',monospace}
+.status-pill{display:flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:10px;font-family:'JetBrains Mono',monospace;border:1px solid var(--border);background:var(--surface);transition:all .3s;cursor:pointer}
+.status-pill.online{border-color:#34d39944;color:var(--ok)}
+.status-pill.offline{border-color:#7c6aff44;color:var(--accent2)}
+.status-pill.checking{color:var(--muted)}
+.sdot{width:6px;height:6px;border-radius:50%;background:currentColor}
+.sdot.pulse{animation:pulse 1.5s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.5)}}
+
+/* TABS */
+.tabs{display:flex;border-bottom:1px solid var(--border);background:#05050866;flex-shrink:0;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex:1;min-width:70px;padding:9px 4px;font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--muted);border:none;background:transparent;cursor:pointer;letter-spacing:.4px;transition:all .2s;border-bottom:2px solid transparent;white-space:nowrap}
+.tab.active{color:var(--accent2);border-bottom-color:var(--accent)}
+
+/* PANELS */
+.panel{flex:1;overflow-y:auto;display:none;flex-direction:column}
+.panel.active{display:flex}
+.panel::-webkit-scrollbar{width:2px}
+.panel::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+
+/* CHAT */
+#panelChat{padding:16px;gap:14px}
+.welcome{text-align:center;padding:30px 20px;animation:fadeUp .6s ease forwards}
+.welcome-icon{width:56px;height:56px;margin:0 auto 14px;background:linear-gradient(135deg,var(--accent)22,var(--accent2)18);border:1px solid var(--accent)44;border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:24px;box-shadow:0 0 28px var(--glow)}
+.welcome h2{font-size:16px;font-weight:600;margin-bottom:6px}
+.welcome p{font-size:12px;color:var(--muted);line-height:1.6;max-width:240px;margin:0 auto}
+.msg{display:flex;flex-direction:column;gap:3px;max-width:84%;opacity:0;animation:fadeUp .25s ease forwards}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.msg.user{align-self:flex-end}.msg.ai{align-self:flex-start}
+.msg-meta{font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--muted);padding:0 5px;display:flex;gap:5px;align-items:center}
+.msg.user .msg-meta{justify-content:flex-end}
+.src{font-size:8px;padding:1px 5px;border-radius:3px;font-family:'JetBrains Mono',monospace}
+.src.pc{background:#34d39922;color:var(--ok);border:1px solid #34d39933}
+.src.mistral{background:#7c6aff22;color:var(--accent2);border:1px solid #7c6aff33}
+.msg-bubble{padding:10px 14px;border-radius:14px;font-size:13px;line-height:1.65;white-space:pre-wrap;word-break:break-word}
+.msg.user .msg-bubble{background:linear-gradient(135deg,var(--accent)22,var(--accent2)18);border:1px solid var(--accent)33;border-bottom-right-radius:4px}
+.msg.ai .msg-bubble{background:var(--surface2);border:1px solid var(--border);border-bottom-left-radius:4px}
+.typing-wrap{align-self:flex-start;opacity:0;animation:fadeUp .2s ease forwards}
+.typing{display:flex;gap:5px;align-items:center;padding:11px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:14px;border-bottom-left-radius:4px}
+.typing span{width:5px;height:5px;border-radius:50%;background:var(--accent);animation:bounce 1.2s ease-in-out infinite}
+.typing span:nth-child(2){animation-delay:.2s}.typing span:nth-child(3){animation-delay:.4s}
+@keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-6px)}}
+.msg-err{align-self:flex-start;font-size:11px;color:var(--danger);padding:7px 11px;background:#f8717110;border:1px solid #f8717130;border-radius:9px;animation:fadeUp .2s ease forwards;opacity:0}
+
+/* INPUT */
+.input-area{padding:10px 14px;padding-bottom:max(10px,var(--safe));border-top:1px solid var(--border);background:#05050899;backdrop-filter:blur(20px);flex-shrink:0}
+.input-row{display:flex;gap:8px;align-items:flex-end;background:var(--surface2);border:1px solid var(--border);border-radius:13px;padding:5px 5px 5px 13px;transition:border-color .2s}
+.input-row:focus-within{border-color:var(--accent)66;box-shadow:0 0 0 3px var(--glow)}
+textarea{flex:1;background:transparent;border:none;outline:none;color:var(--text);font-family:'Space Grotesk',sans-serif;font-size:13px;line-height:1.5;resize:none;max-height:110px;min-height:22px;padding:3px 0;align-self:center}
+textarea::placeholder{color:var(--muted)}
+.btn-send{width:36px;height:36px;flex-shrink:0;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;box-shadow:0 0 10px var(--glow)}
+.btn-send:active{transform:scale(.93)}.btn-send:disabled{opacity:.35;cursor:not-allowed;box-shadow:none}
+.btn-send svg{width:15px;height:15px;fill:white}
+
+/* BANNER PC */
+.pc-banner{position:fixed;top:0;left:0;right:0;z-index:100;padding:12px 16px;padding-top:max(12px,env(safe-area-inset-top));background:linear-gradient(135deg,#34d39922,#059a6222);border-bottom:1px solid #34d39944;backdrop-filter:blur(20px);display:flex;align-items:center;gap:10px;transform:translateY(-100%);transition:transform .4s cubic-bezier(.34,1.56,.64,1)}
+.pc-banner.show{transform:translateY(0)}
+.pc-banner-text{flex:1;font-size:12px;color:var(--ok)}
+.pc-banner-text strong{display:block;font-size:13px}
+.pbtn{padding:6px 11px;border-radius:7px;border:none;cursor:pointer;font-family:'Space Grotesk',sans-serif;font-size:11px;font-weight:600}
+.pbtn.yes{background:var(--ok);color:#000}
+.pbtn.no{background:transparent;border:1px solid #34d39944;color:var(--ok)}
+
+/* DEBUG SECTIONS */
+#panelDebug{padding:14px;gap:10px}
+.debug-section{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:0}
+.debug-title{padding:10px 14px;font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--muted);letter-spacing:2px;text-transform:uppercase;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px}
+.debug-row{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border)88;gap:10px}
+.debug-row:last-child{border-bottom:none}
+.debug-label{font-size:11px;color:var(--text);flex:1;line-height:1.3}
+.debug-label small{display:block;font-size:9px;color:var(--muted);margin-top:2px;font-family:'JetBrains Mono',monospace}
+.debug-val{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--muted);max-width:160px;text-align:right;word-break:break-all}
+.debug-val.ok{color:var(--ok)}.debug-val.err{color:var(--danger)}.debug-val.warn{color:var(--warn)}
+.dbtn{padding:5px 12px;border-radius:7px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:10px;cursor:pointer;transition:all .15s;flex-shrink:0;white-space:nowrap}
+.dbtn:active{transform:scale(.95)}
+.dbtn.danger{border-color:#f8717144;color:var(--danger)}
+.dbtn.ok{border-color:#34d39944;color:var(--ok)}
+.dbtn.accent{border-color:var(--accent)66;color:var(--accent2)}
+.dbtn.warn{border-color:#facc1544;color:var(--warn)}
+.btn-row{display:flex;gap:6px;flex-wrap:wrap}
+
+/* TOAST */
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--surface2);border:1px solid var(--accent)66;color:var(--text);font-size:11px;font-family:'JetBrains Mono',monospace;padding:8px 14px;border-radius:20px;opacity:0;transition:all .3s;z-index:200;pointer-events:none;white-space:nowrap;max-width:90vw;text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* NOTIFS */
+#panelNotif{padding:14px;gap:10px}
+.notif-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.notif-item{display:flex;align-items:flex-start;gap:12px;padding:12px 14px;border-bottom:1px solid var(--border)88;animation:fadeUp .3s ease forwards;opacity:0}
+.notif-item:last-child{border-bottom:none}
+.notif-ico{font-size:20px;flex-shrink:0;margin-top:1px}
+.notif-body{flex:1}
+.notif-body strong{display:block;font-size:12px;margin-bottom:3px}
+.notif-body span{font-size:11px;color:var(--muted)}
+.notif-time{font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--muted);flex-shrink:0}
+.empty-state{text-align:center;padding:40px 20px;color:var(--muted);font-size:12px}
+.empty-state .e-icon{font-size:32px;margin-bottom:10px}
+
+/* PANEL TEST */
+#panelTest{padding:14px;gap:10px}
+.test-section{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.test-title{padding:10px 14px;font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--muted);letter-spacing:2px;text-transform:uppercase;border-bottom:1px solid var(--border)}
+.test-row{padding:12px 14px;border-bottom:1px solid var(--border)88}
+.test-row:last-child{border-bottom:none}
+.test-row-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:0}
+.test-row-head.has-desc{margin-bottom:6px}
+.test-desc{font-size:10px;color:var(--muted);line-height:1.5;font-family:'JetBrains Mono',monospace}
+.test-label{font-size:12px;font-weight:500}
+.test-result{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--muted);padding:6px 10px;background:var(--bg);border:1px solid var(--border);border-radius:7px;margin-top:6px;line-height:1.5;min-height:28px;word-break:break-all}
+.test-result.ok{color:var(--ok);border-color:#34d39933}
+.test-result.err{color:var(--danger);border-color:#f8717133}
+.test-result.warn{color:var(--warn);border-color:#facc1533}
+
+/* PANEL INFO */
+#panelInfo{padding:14px;gap:10px}
+.info-section{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.info-title{padding:10px 14px;font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--muted);letter-spacing:2px;text-transform:uppercase;border-bottom:1px solid var(--border)}
+.info-row{display:flex;justify-content:space-between;align-items:flex-start;padding:9px 14px;border-bottom:1px solid var(--border)88;gap:8px}
+.info-row:last-child{border-bottom:none}
+.info-key{font-size:10px;color:var(--muted);flex-shrink:0;max-width:40%;font-family:'JetBrains Mono',monospace}
+.info-val{font-size:10px;color:var(--text);text-align:right;word-break:break-all;font-family:'JetBrains Mono',monospace}
+.info-val.ok{color:var(--ok)}.info-val.err{color:var(--danger)}.info-val.warn{color:var(--warn)}
+.guide-box{padding:14px;font-size:11px;color:var(--muted);line-height:1.7;font-family:'JetBrains Mono',monospace}
+.guide-box a{color:var(--accent2);text-decoration:none}
+.guide-box .step{display:flex;gap:8px;margin-bottom:8px;align-items:flex-start}
+.guide-box .step-num{background:var(--accent)33;color:var(--accent2);width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;margin-top:1px}
+</style>
+</head>
+<body>
+<div class="pc-banner" id="pcBanner">
+  <div style="font-size:18px">🖥️</div>
+  <div class="pc-banner-text"><strong>PC conectado</strong>Modo Rápido disponible</div>
+  <button class="pbtn yes" onclick="switchToPC()">Cambiar</button>
+  <button class="pbtn no" onclick="document.getElementById('pcBanner').classList.remove('show')">✕</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div id="app">
+  <div class="header">
+    <div style="display:flex;align-items:center">
+      <div class="logo">🤖</div>
+      <div>
+        <div class="header-title">CaskIA</div>
+        <div class="header-sub" id="modelLabel">mistral · nube</div>
+      </div>
+    </div>
+    <div class="status-pill checking" id="statusPill" onclick="checkPC()">
+      <div class="sdot pulse" id="statusDot"></div>
+      <span id="statusTxt">conectando</span>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('chat',this)">💬 CHAT</button>
+    <button class="tab" onclick="showTab('debug',this)">🔧 ESTADO</button>
+    <button class="tab" onclick="showTab('notif',this)">🔔 NOTIFS<span id="notifBadge" style="display:none;background:var(--danger);color:#000;font-size:8px;padding:1px 4px;border-radius:8px;margin-left:4px">0</span></button>
+    <button class="tab" onclick="showTab('test',this)">🧪 TEST</button>
+    <button class="tab" onclick="showTab('info',this)">ℹ️ INFO</button>
+  </div>
+
+  <!-- CHAT -->
+  <div class="panel active" id="panelChat">
+    <div class="welcome" id="welcomeMsg">
+      <div class="welcome-icon">✦</div>
+      <h2>Hola, soy CaskIA</h2>
+      <p>Conectando con tu PC… Si no está disponible usaré Mistral.</p>
+    </div>
+  </div>
+
+  <!-- ESTADO / DEBUG -->
+  <div class="panel" id="panelDebug">
+    <div class="debug-section">
+      <div class="debug-title">🔌 Conexión PC</div>
+      <div class="debug-row"><span class="debug-label">Estado PC</span><span class="debug-val" id="dPC">comprobando…</span></div>
+      <div class="debug-row"><span class="debug-label">URL PC</span><span class="debug-val" id="dURL">—</span></div>
+      <div class="debug-row"><span class="debug-label">Modo activo</span><span class="debug-val" id="dModo">—</span></div>
+      <div class="debug-row"><span class="debug-label">Última comprobación</span><span class="debug-val" id="dUltima">—</span></div>
+      <div class="debug-row">
+        <span class="debug-label">Forzar recheck<small>Comprueba el PC ahora mismo</small></span>
+        <button class="dbtn accent" onclick="checkPC()">↻ Comprobar</button>
+      </div>
+    </div>
+
+    <div class="debug-section">
+      <div class="debug-title">🤖 Mistral API</div>
+      <div class="debug-row"><span class="debug-label">API Key</span><span class="debug-val" id="dKey">—</span></div>
+      <div class="debug-row"><span class="debug-label">Modelo</span><span class="debug-val" id="dModel">—</span></div>
+      <div class="debug-row"><span class="debug-label">Mensajes en historial</span><span class="debug-val" id="dHistory">0</span></div>
+      <div class="debug-row">
+        <span class="debug-label">Test Mistral<small>Envía "Di solo ok" a la API</small></span>
+        <button class="dbtn ok" onclick="testMistral()">▶ Test</button>
+      </div>
+      <div class="debug-row"><span class="debug-label">Resultado test</span><span class="debug-val" id="dTest">—</span></div>
+    </div>
+
+    <div class="debug-section">
+      <div class="debug-title">🖥️ Simular PC</div>
+      <div class="debug-row">
+        <span class="debug-label">Simular PC encendido<small>Activa modo rápido simulado</small></span>
+        <button class="dbtn ok" onclick="simPC(true)">▶ ON</button>
+      </div>
+      <div class="debug-row">
+        <span class="debug-label">Simular PC apagado<small>Vuelve a modo Mistral</small></span>
+        <button class="dbtn danger" onclick="simPC(false)">■ OFF</button>
+      </div>
+      <div class="debug-row">
+        <span class="debug-label">Mostrar banner PC<small>Prueba el banner flotante</small></span>
+        <button class="dbtn accent" onclick="showPCBanner()">Mostrar banner</button>
+      </div>
+      <div class="debug-row">
+        <span class="debug-label">Mensaje sistema (PC)<small>Simula respuesta del PC</small></span>
+        <button class="dbtn accent" onclick="addMsg('ai','(Simulado PC) Todo funciona correctamente ✓','pc')">Msg PC</button>
+      </div>
+    </div>
+
+    <div class="debug-section">
+      <div class="debug-title">🔔 Notificaciones</div>
+      <div class="debug-row">
+        <span class="debug-label">Disparar notif PC<small>Simula PC conectado</small></span>
+        <button class="dbtn accent" onclick="pushNotif('🖥️','PC conectado','Modo Rápido disponible')">Notif PC</button>
+      </div>
+      <div class="debug-row">
+        <span class="debug-label">Disparar notif info<small>Simula aviso genérico</small></span>
+        <button class="dbtn accent" onclick="pushNotif('ℹ️','CaskIA','Sistema funcionando correctamente')">Notif info</button>
+      </div>
+      <div class="debug-row">
+        <span class="debug-label">Disparar notif error<small>Simula error de conexión</small></span>
+        <button class="dbtn danger" onclick="pushNotif('⚠️','Error de conexión','No se pudo conectar con el PC')">Notif error</button>
+      </div>
+      <div class="debug-row">
+        <span class="debug-label">Pedir permiso<small>Solicita permiso notificaciones OS</small></span>
+        <button class="dbtn warn" onclick="pedirPermisoNotif()">Pedir permiso</button>
+      </div>
+      <div class="debug-row"><span class="debug-label">Permiso actual</span><span class="debug-val" id="dNotifPerm">—</span></div>
+    </div>
+
+    <div class="debug-section">
+      <div class="debug-title">💬 Chat</div>
+      <div class="debug-row">
+        <span class="debug-label">Limpiar historial<small>Borra los mensajes del chat</small></span>
+        <button class="dbtn danger" onclick="clearHistory()">🗑 Limpiar</button>
+      </div>
+      <div class="debug-row">
+        <span class="debug-label">Mensaje de prueba<small>Añade mensaje de usuario falso</small></span>
+        <button class="dbtn accent" onclick="addMsg('user','Hola, ¿cómo estás?')">Msg usuario</button>
+      </div>
+      <div class="debug-row">
+        <span class="debug-label">Respuesta Mistral<small>Añade respuesta de IA falsa</small></span>
+        <button class="dbtn accent" onclick="addMsg('ai','¡Todo funciona! Esta es una respuesta de prueba desde Mistral.','mistral')">Msg AI</button>
+      </div>
+      <div class="debug-row">
+        <span class="debug-label">Mostrar typing<small>Animación de escritura 3s</small></span>
+        <button class="dbtn accent" onclick="addTyping();setTimeout(removeTyping,3000)">Typing…</button>
+      </div>
+    </div>
+
+    <div class="debug-section">
+      <div class="debug-title">📊 Indicador de estado</div>
+      <div class="debug-row">
+        <span class="debug-label">Estado: online (PC)<small>Punto verde, modo rápido</small></span>
+        <button class="dbtn ok" onclick="setStatus('online');toast('Estado → ONLINE')">Online</button>
+      </div>
+      <div class="debug-row">
+        <span class="debug-label">Estado: offline (nube)<small>Punto morado, Mistral</small></span>
+        <button class="dbtn accent" onclick="setStatus('offline');toast('Estado → OFFLINE')">Offline</button>
+      </div>
+      <div class="debug-row">
+        <span class="debug-label">Estado: checking<small>Animación pulsante</small></span>
+        <button class="dbtn warn" onclick="setStatus('checking');toast('Estado → CHECKING')">Checking</button>
+      </div>
+    </div>
+
+    <div class="debug-section">
+      <div class="debug-title">📱 PWA</div>
+      <div class="debug-row"><span class="debug-label">Modo display</span><span class="debug-val" id="dDisplay">—</span></div>
+      <div class="debug-row"><span class="debug-label">Service Worker</span><span class="debug-val" id="dSW">—</span></div>
+      <div class="debug-row"><span class="debug-label">Online</span><span class="debug-val" id="dOnline">—</span></div>
+      <div class="debug-row">
+        <span class="debug-label">Recargar app<small>Fuerza recarga completa</small></span>
+        <button class="dbtn warn" onclick="location.reload()">↻ Reload</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- NOTIFICACIONES -->
+  <div class="panel" id="panelNotif">
+    <div style="padding:10px 14px 0;display:flex;justify-content:flex-end">
+      <button class="dbtn danger" onclick="notifs=[];renderNotifs();document.getElementById('notifBadge').style.display='none'">🗑 Borrar todo</button>
+    </div>
+    <div id="notifList" style="padding:4px 14px 14px">
+      <div class="empty-state"><div class="e-icon">🔔</div>Sin notificaciones aún</div>
+    </div>
+  </div>
+
+  <!-- PANEL TEST COMPLETO -->
+  <div class="panel" id="panelTest">
+
+    <div class="test-section">
+      <div class="test-title">🌐 Test Worker CF</div>
+      <div class="test-row">
+        <div class="test-row-head has-desc">
+          <span class="test-label">Ping al Worker</span>
+          <button class="dbtn accent" onclick="testWorker()">▶ Test</button>
+        </div>
+        <div class="test-desc">Comprueba que el Cloudflare Worker responde (GET /url_pc)</div>
+        <div class="test-result" id="tWorker">—</div>
+      </div>
+      <div class="test-row">
+        <div class="test-row-head has-desc">
+          <span class="test-label">URL guardada en KV</span>
+          <button class="dbtn accent" onclick="testWorkerURL()">▶ Leer</button>
+        </div>
+        <div class="test-desc">Devuelve la URL del PC que está en Cloudflare KV</div>
+        <div class="test-result" id="tWorkerURL">—</div>
+      </div>
+    </div>
+
+    <div class="test-section">
+      <div class="test-title">🤖 Test Mistral</div>
+      <div class="test-row">
+        <div class="test-row-head has-desc">
+          <span class="test-label">Ping API</span>
+          <button class="dbtn ok" onclick="testMistralFull()">▶ Test</button>
+        </div>
+        <div class="test-desc">Llama a la API con "Di solo ok" — mide latencia</div>
+        <div class="test-result" id="tMistral">—</div>
+      </div>
+      <div class="test-row">
+        <div class="test-row-head has-desc">
+          <span class="test-label">Key válida</span>
+          <button class="dbtn ok" onclick="testMistralKey()">▶ Verificar</button>
+        </div>
+        <div class="test-desc">Comprueba formato y prefijo de la API key</div>
+        <div class="test-result" id="tKey">—</div>
+      </div>
+    </div>
+
+    <div class="test-section">
+      <div class="test-title">🔔 Test Notificaciones</div>
+      <div class="test-row">
+        <div class="test-row-head has-desc">
+          <span class="test-label">Permiso del sistema</span>
+          <button class="dbtn accent" onclick="testNotifPermiso()">▶ Check</button>
+        </div>
+        <div class="test-desc">Comprueba si el navegador tiene permiso para notificaciones push</div>
+        <div class="test-result" id="tNotifPerm">—</div>
+      </div>
+      <div class="test-row">
+        <div class="test-row-head has-desc">
+          <span class="test-label">Enviar Web Push</span>
+          <button class="dbtn accent" onclick="testNotifPush()">▶ Enviar</button>
+        </div>
+        <div class="test-desc">Dispara una notificación nativa del SO (si hay permiso)</div>
+        <div class="test-result" id="tNotifPush">—</div>
+      </div>
+      <div class="test-row">
+        <div class="test-row-head has-desc">
+          <span class="test-label">Notif in-app</span>
+          <button class="dbtn accent" onclick="pushNotif('🧪','Test','Notificación de prueba desde panel Test');setTestResult('tNotifInApp','✓ Notificación añadida — ve a la pestaña NOTIFS','ok')">▶ Test</button>
+        </div>
+        <div class="test-desc">Añade una notificación al panel interno de la app</div>
+        <div class="test-result" id="tNotifInApp">—</div>
+      </div>
+    </div>
+
+    <div class="test-section">
+      <div class="test-title">📱 Test PWA / Device</div>
+      <div class="test-row">
+        <div class="test-row-head has-desc">
+          <span class="test-label">Modo standalone</span>
+          <button class="dbtn accent" onclick="testStandalone()">▶ Check</button>
+        </div>
+        <div class="test-desc">¿Está la app instalada y corriendo como PWA?</div>
+        <div class="test-result" id="tStandalone">—</div>
+      </div>
+      <div class="test-row">
+        <div class="test-row-head has-desc">
+          <span class="test-label">Service Worker</span>
+          <button class="dbtn accent" onclick="testSW()">▶ Check</button>
+        </div>
+        <div class="test-desc">Comprueba soporte y registro de Service Worker</div>
+        <div class="test-result" id="tSW">—</div>
+      </div>
+      <div class="test-row">
+        <div class="test-row-head has-desc">
+          <span class="test-label">Manifest</span>
+          <button class="dbtn accent" onclick="testManifest()">▶ Check</button>
+        </div>
+        <div class="test-desc">Verifica que el manifest está enlazado correctamente</div>
+        <div class="test-result" id="tManifest">—</div>
+      </div>
+      <div class="test-row">
+        <div class="test-row-head has-desc">
+          <span class="test-label">User Agent</span>
+          <button class="dbtn accent" onclick="testUA()">▶ Info</button>
+        </div>
+        <div class="test-desc">Devuelve el user agent del dispositivo</div>
+        <div class="test-result" id="tUA">—</div>
+      </div>
+    </div>
+
+    <div class="test-section">
+      <div class="test-title">💾 Test Almacenamiento</div>
+      <div class="test-row">
+        <div class="test-row-head has-desc">
+          <span class="test-label">localStorage</span>
+          <button class="dbtn accent" onclick="testLocalStorage()">▶ Test</button>
+        </div>
+        <div class="test-desc">Escribe y lee un valor en localStorage</div>
+        <div class="test-result" id="tLS">—</div>
+      </div>
+      <div class="test-row">
+        <div class="test-row-head has-desc">
+          <span class="test-label">Historial chat actual</span>
+          <button class="dbtn accent" onclick="testHistorial()">▶ Ver</button>
+        </div>
+        <div class="test-desc">Muestra cuántos mensajes hay en memoria</div>
+        <div class="test-result" id="tHistorial">—</div>
+      </div>
+    </div>
+
+    <div class="test-section">
+      <div class="test-title">🌐 Test Red</div>
+      <div class="test-row">
+        <div class="test-row-head has-desc">
+          <span class="test-label">Estado conexión</span>
+          <button class="dbtn accent" onclick="testNetwork()">▶ Check</button>
+        </div>
+        <div class="test-desc">Comprueba navigator.onLine y tipo de red</div>
+        <div class="test-result" id="tNetwork">—</div>
+      </div>
+      <div class="test-row">
+        <div class="test-row-head has-desc">
+          <span class="test-label">Fetch externo</span>
+          <button class="dbtn accent" onclick="testFetchExterno()">▶ Test</button>
+        </div>
+        <div class="test-desc">Hace un fetch a api.mistral.ai para verificar conectividad</div>
+        <div class="test-result" id="tFetchExt">—</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- INFO / GUÍA GITHUB PAGES -->
+  <div class="panel" id="panelInfo">
+
+    <div class="info-section">
+      <div class="info-title">📦 Versión actual</div>
+      <div class="info-row"><span class="info-key">App</span><span class="info-val">CaskIA v1.0</span></div>
+      <div class="info-row"><span class="info-key">Modelo</span><span class="info-val" id="iModel">—</span></div>
+      <div class="info-row"><span class="info-key">Worker URL</span><span class="info-val" id="iWorker">—</span></div>
+      <div class="info-row"><span class="info-key">Key config</span><span class="info-val" id="iKey">—</span></div>
+      <div class="info-row"><span class="info-key">Display mode</span><span class="info-val" id="iDisplay">—</span></div>
+      <div class="info-row"><span class="info-key">Plataforma</span><span class="info-val" id="iPlatform">—</span></div>
+    </div>
+
+    <div class="info-section">
+      <div class="info-title">🚀 Cómo subir a GitHub Pages</div>
+      <div class="guide-box">
+        <div class="step"><div class="step-num">1</div><div>Ve a <a href="https://github.com" target="_blank">github.com</a> → New repository → ponle nombre tipo <strong>caskia</strong> → Public → Create</div></div>
+        <div class="step"><div class="step-num">2</div><div>Dentro del repo: <strong>Add file → Upload files</strong> → sube este <strong>caskia-pwa.html</strong></div></div>
+        <div class="step"><div class="step-num">3</div><div>Renombra el archivo a <strong>index.html</strong> (o súbelo ya con ese nombre)</div></div>
+        <div class="step"><div class="step-num">4</div><div>Settings → Pages → Source: <strong>Deploy from branch</strong> → Branch: <strong>main</strong> → / (root) → Save</div></div>
+        <div class="step"><div class="step-num">5</div><div>En ~2 minutos tendrás tu URL: <strong>tuusuario.github.io/caskia</strong></div></div>
+        <div class="step"><div class="step-num">6</div><div>Esa URL la metes en <a href="https://www.pwabuilder.com" target="_blank">pwabuilder.com</a> para generar el APK de Android</div></div>
+      </div>
+    </div>
+
+    <div class="info-section">
+      <div class="info-title">🔑 Configuración rápida</div>
+      <div class="guide-box">
+        <div style="margin-bottom:8px">Edita las 3 primeras líneas del &lt;script&gt; en el HTML:</div>
+        <div style="background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:10px;margin-bottom:8px;line-height:2">
+          <span style="color:var(--muted)">const</span> <span style="color:var(--accent2)">MISTRAL_KEY</span> = <span style="color:var(--ok)">'tu-key-aqui'</span>;<br>
+          <span style="color:var(--muted)">const</span> <span style="color:var(--accent2)">MISTRAL_MODEL</span> = <span style="color:var(--ok)">'mistral-small-latest'</span>;<br>
+          <span style="color:var(--muted)">const</span> <span style="color:var(--accent2)">PC_WORKER</span> = <span style="color:var(--ok)">'https://tu-worker.workers.dev'</span>;
+        </div>
+        <div>Consigue tu key en <a href="https://console.mistral.ai" target="_blank">console.mistral.ai</a></div>
+      </div>
+    </div>
+
+    <div class="info-section">
+      <div class="info-title">⚠️ Seguridad</div>
+      <div class="guide-box" style="color:var(--warn)">
+        <div style="margin-bottom:6px">❗ Nunca compartas ni pegues tu API key en chats o foros.</div>
+        <div style="margin-bottom:6px">❗ Si la expones accidentalmente, bórrala en console.mistral.ai y crea una nueva.</div>
+        <div>❗ Para producción, usa un proxy backend en lugar de la key directa en el HTML.</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="input-area">
+    <div class="input-row">
+      <textarea id="input" placeholder="Escribe un mensaje…" rows="1"></textarea>
+      <button class="btn-send" id="btnSend">
+        <svg viewBox="0 0 24 24"><path d="M2 21L23 12 2 3v7l15 2-15 2v7z"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+const MISTRAL_KEY   = 'PON_TU_KEY_AQUI';
+const MISTRAL_MODEL = 'mistral-small-latest';
+const PC_WORKER     = 'https://white-sound-4f38.caskiaoficial.workers.dev';
+
+let pcUrl    = null;
+let usandoPC = false;
+let pcWasOff = true;
+let sending  = false;
+let history  = [];
+let notifs   = [];
+
+const messagesEl = document.getElementById('panelChat');
+const inputEl    = document.getElementById('input');
+const btnSend    = document.getElementById('btnSend');
+
+// Manifest inline
+const manifest = {name:"CaskIA",short_name:"CaskIA",start_url:"./",display:"standalone",background_color:"#050508",theme_color:"#050508",orientation:"portrait",icons:[{src:"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%237c6aff'/><text y='.9em' font-size='65' x='18'>🤖</text></svg>",sizes:"512x512",type:"image/svg+xml"}]};
+const blob = new Blob([JSON.stringify(manifest)],{type:'application/json'});
+document.getElementById('manifestLink').href = URL.createObjectURL(blob);
+
+// ── TOAST ──
+function toast(msg, dur=2200) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), dur);
+}
+
+// ── TABS ──
+function showTab(name, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('panel'+name.charAt(0).toUpperCase()+name.slice(1)).classList.add('active');
+  btn.classList.add('active');
+  if (name === 'notif') { document.getElementById('notifBadge').style.display='none'; }
+  if (name === 'info')  { updateInfo(); }
+  updateDebug();
+}
+
+// ── STATUS ──
+function setStatus(mode) {
+  const pill = document.getElementById('statusPill');
+  const dot  = document.getElementById('statusDot');
+  const txt  = document.getElementById('statusTxt');
+  const lbl  = document.getElementById('modelLabel');
+  pill.className = 'status-pill ' + mode;
+  if (mode === 'online') {
+    dot.className = 'sdot'; txt.textContent = 'pc online'; lbl.textContent = 'modo rápido · local';
+  } else if (mode === 'offline') {
+    dot.className = 'sdot'; txt.textContent = 'mistral · nube'; lbl.textContent = 'mistral-small · nube';
+  } else {
+    dot.className = 'sdot pulse'; txt.textContent = 'conectando'; lbl.textContent = 'comprobando…';
+  }
+  updateDebug();
+}
+
+function updateDebug() {
+  document.getElementById('dPC').textContent    = usandoPC ? 'Online ✓' : 'Apagado';
+  document.getElementById('dPC').className      = 'debug-val ' + (usandoPC ? 'ok' : 'err');
+  document.getElementById('dURL').textContent   = pcUrl || '—';
+  document.getElementById('dModo').textContent  = usandoPC ? 'PC local' : 'Mistral nube';
+  document.getElementById('dUltima').textContent= new Date().toLocaleTimeString('es');
+  document.getElementById('dKey').textContent   = MISTRAL_KEY === 'PON_TU_KEY_AQUI' ? '⚠ No configurada' : MISTRAL_KEY.slice(0,6)+'…'+MISTRAL_KEY.slice(-4);
+  document.getElementById('dKey').className     = 'debug-val ' + (MISTRAL_KEY === 'PON_TU_KEY_AQUI' ? 'err' : 'ok');
+  document.getElementById('dModel').textContent = MISTRAL_MODEL;
+  document.getElementById('dHistory').textContent = history.length;
+  document.getElementById('dNotifPerm').textContent = 'Notification' in window ? Notification.permission : 'no soportado';
+  document.getElementById('dDisplay').textContent = window.matchMedia('(display-mode: standalone)').matches ? 'standalone ✓' : 'browser';
+  document.getElementById('dSW').textContent = 'serviceWorker' in navigator ? 'soportado' : 'no soportado';
+  document.getElementById('dOnline').textContent = navigator.onLine ? 'sí ✓' : 'no';
+}
+
+function updateInfo() {
+  document.getElementById('iModel').textContent = MISTRAL_MODEL;
+  document.getElementById('iWorker').textContent = PC_WORKER.replace('https://','').slice(0,35)+'…';
+  document.getElementById('iKey').textContent = MISTRAL_KEY === 'PON_TU_KEY_AQUI' ? '⚠ No configurada' : '✓ Configurada';
+  document.getElementById('iKey').className = 'info-val ' + (MISTRAL_KEY === 'PON_TU_KEY_AQUI' ? 'err' : 'ok');
+  document.getElementById('iDisplay').textContent = window.matchMedia('(display-mode: standalone)').matches ? 'standalone ✓' : 'browser (no instalada)';
+  document.getElementById('iPlatform').textContent = navigator.platform || navigator.userAgentData?.platform || '—';
+}
+
+// ── CHECK PC ──
+async function checkPC() {
+  setStatus('checking');
+  try {
+    const r = await fetch(`${PC_WORKER}/url_pc`, {signal: AbortSignal.timeout(4000)});
+    const d = await r.json();
+    if (d.url) {
+      const ping = await fetch(`${d.url}/ping`, {signal: AbortSignal.timeout(3000)});
+      if (ping.ok) {
+        const wasOff = !usandoPC && pcWasOff;
+        pcUrl = d.url; usandoPC = true; pcWasOff = false;
+        setStatus('online');
+        if (wasOff) { showPCBanner(); pushNotif('🖥️','PC conectado','Modo Rápido disponible'); }
+        return;
+      }
+    }
+  } catch {}
+  pcUrl = null; usandoPC = false; pcWasOff = true;
+  setStatus('offline');
+}
+
+function simPC(on) {
+  if (on) { pcUrl = 'http://simulado'; usandoPC = true; pcWasOff = false; setStatus('online'); showPCBanner(); pushNotif('🖥️','PC conectado (simulado)','Test de notificación'); toast('✓ PC simulado ON'); }
+  else     { pcUrl = null; usandoPC = false; pcWasOff = true; setStatus('offline'); toast('PC simulado OFF'); }
+  updateDebug();
+}
+
+function showPCBanner() { const b = document.getElementById('pcBanner'); b.classList.add('show'); setTimeout(()=>b.classList.remove('show'),8000); }
+function switchToPC()   { document.getElementById('pcBanner').classList.remove('show'); addMsg('ai','✓ Conectado a tu PC. Modo Rápido activado.','pc'); }
+
+// ── NOTIFICACIONES ──
+function pedirPermisoNotif() {
+  if (!('Notification' in window)) { toast('❌ Notificaciones no soportadas'); return; }
+  Notification.requestPermission().then(p => { toast('Permiso: ' + p); updateDebug(); });
+}
+
+function pushNotif(icon, title, body) {
+  const ts = new Date().toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit'});
+  notifs.unshift({icon, title, body, ts});
+  renderNotifs();
+  const badge = document.getElementById('notifBadge');
+  badge.textContent = notifs.length;
+  badge.style.display = 'inline';
+  if ('Notification' in window && Notification.permission === 'granted') {
+    new Notification(title, {body, icon:'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="22" fill="%237c6aff"/><text y=".9em" font-size="65" x="18">🤖</text></svg>'});
+  }
+}
+
+function renderNotifs() {
+  const list = document.getElementById('notifList');
+  if (!notifs.length) { list.innerHTML = '<div class="empty-state"><div class="e-icon">🔔</div>Sin notificaciones aún</div>'; return; }
+  const card = document.createElement('div'); card.className = 'notif-card';
+  notifs.forEach((n,i) => {
+    const item = document.createElement('div'); item.className = 'notif-item';
+    item.style.animationDelay = (i*0.05)+'s';
+    item.innerHTML = `<div class="notif-ico">${n.icon}</div><div class="notif-body"><strong>${n.title}</strong><span>${n.body}</span></div><div class="notif-time">${n.ts}</div>`;
+    card.appendChild(item);
+  });
+  list.innerHTML = ''; list.appendChild(card);
+}
+
+if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission();
+
+// ── TEST MISTRAL ──
+async function testMistral() {
+  document.getElementById('dTest').textContent = 'probando…';
+  document.getElementById('dTest').className = 'debug-val warn';
+  try {
+    const t0 = Date.now();
+    const r = await fetch('https://api.mistral.ai/v1/chat/completions', {
+      method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${MISTRAL_KEY}`},
+      body: JSON.stringify({model:MISTRAL_MODEL,messages:[{role:'user',content:'Di solo "ok"'}],max_tokens:5}),
+      signal: AbortSignal.timeout(10000)
+    });
+    const d = await r.json();
+    const ms = Date.now()-t0;
+    if (r.ok) { document.getElementById('dTest').textContent = `✓ OK — ${d.choices[0].message.content.trim()} (${ms}ms)`; document.getElementById('dTest').className = 'debug-val ok'; }
+    else       { document.getElementById('dTest').textContent = '✗ '+d.message; document.getElementById('dTest').className = 'debug-val err'; }
+  } catch(e) { document.getElementById('dTest').textContent = '✗ '+e.message; document.getElementById('dTest').className = 'debug-val err'; }
+}
+
+// ── HELPER RESULTADOS TEST ──
+function setTestResult(id, text, cls='') {
+  const el = document.getElementById(id);
+  el.textContent = text; el.className = 'test-result' + (cls?' '+cls:'');
+}
+
+// ── TESTS PANEL TEST ──
+async function testWorker() {
+  setTestResult('tWorker','probando…','warn');
+  try {
+    const t0=Date.now();
+    const r = await fetch(`${PC_WORKER}/url_pc`,{signal:AbortSignal.timeout(5000)});
+    const ms=Date.now()-t0;
+    if(r.ok){ setTestResult('tWorker',`✓ Worker responde (${ms}ms) — status ${r.status}`,'ok'); }
+    else     { setTestResult('tWorker',`✗ HTTP ${r.status}`,'err'); }
+  } catch(e){ setTestResult('tWorker','✗ '+e.message,'err'); }
+}
+
+async function testWorkerURL() {
+  setTestResult('tWorkerURL','leyendo…','warn');
+  try {
+    const r = await fetch(`${PC_WORKER}/url_pc`,{signal:AbortSignal.timeout(5000)});
+    const d = await r.json();
+    if(d.url){ setTestResult('tWorkerURL','✓ URL: '+d.url,'ok'); }
+    else      { setTestResult('tWorkerURL','ℹ Sin URL guardada (PC apagado)','warn'); }
+  } catch(e){ setTestResult('tWorkerURL','✗ '+e.message,'err'); }
+}
+
+async function testMistralFull() {
+  setTestResult('tMistral','probando…','warn');
+  try {
+    const t0=Date.now();
+    const r = await fetch('https://api.mistral.ai/v1/chat/completions',{
+      method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${MISTRAL_KEY}`},
+      body:JSON.stringify({model:MISTRAL_MODEL,messages:[{role:'user',content:'Di solo "ok"'}],max_tokens:5}),
+      signal:AbortSignal.timeout(12000)
+    });
+    const ms=Date.now()-t0;
+    const d=await r.json();
+    if(r.ok){ setTestResult('tMistral',`✓ OK — "${d.choices[0].message.content.trim()}" — latencia: ${ms}ms`,'ok'); }
+    else     { setTestResult('tMistral','✗ '+d.message,'err'); }
+  } catch(e){ setTestResult('tMistral','✗ '+e.message,'err'); }
+}
+
+function testMistralKey() {
+  if(MISTRAL_KEY==='PON_TU_KEY_AQUI'){ setTestResult('tKey','✗ Key no configurada — edita el HTML','err'); return; }
+  if(MISTRAL_KEY.length < 20){ setTestResult('tKey','⚠ Key demasiado corta — revisa que sea correcta','warn'); return; }
+  setTestResult('tKey',`✓ Key configurada — ${MISTRAL_KEY.slice(0,6)}…${MISTRAL_KEY.slice(-4)} (${MISTRAL_KEY.length} chars)`,'ok');
+}
+
+function testNotifPermiso() {
+  if(!('Notification' in window)){ setTestResult('tNotifPerm','✗ Notificaciones no soportadas en este navegador','err'); return; }
+  const p=Notification.permission;
+  if(p==='granted'){ setTestResult('tNotifPerm','✓ Permiso concedido — las notificaciones push funcionarán','ok'); }
+  else if(p==='denied'){ setTestResult('tNotifPerm','✗ Permiso denegado — el usuario lo bloqueó en ajustes del navegador','err'); }
+  else { setTestResult('tNotifPerm','⚠ Permiso pendiente — aún no se ha pedido o el usuario no respondió','warn'); }
+}
+
+function testNotifPush() {
+  if(!('Notification' in window)){ setTestResult('tNotifPush','✗ No soportado','err'); return; }
+  if(Notification.permission!=='granted'){ setTestResult('tNotifPush','⚠ Sin permiso — pulsa "Pedir permiso" en la pestaña ESTADO primero','warn'); return; }
+  try {
+    new Notification('CaskIA Test 🧪',{body:'Notificación push de prueba — funciona ✓'});
+    setTestResult('tNotifPush','✓ Notificación push enviada al SO','ok');
+  } catch(e){ setTestResult('tNotifPush','✗ '+e.message,'err'); }
+}
+
+function testStandalone() {
+  const sa=window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone===true;
+  if(sa){ setTestResult('tStandalone','✓ Standalone — app instalada y corriendo como PWA','ok'); }
+  else  { setTestResult('tStandalone','ℹ Modo browser — abre desde la pantalla de inicio para modo standalone','warn'); }
+}
+
+async function testSW() {
+  if(!('serviceWorker' in navigator)){ setTestResult('tSW','✗ Service Worker no soportado en este navegador','err'); return; }
+  try {
+    const regs=await navigator.serviceWorker.getRegistrations();
+    if(regs.length){ setTestResult('tSW',`✓ ${regs.length} Service Worker(s) registrado(s)`,'ok'); }
+    else { setTestResult('tSW','ℹ Soportado pero ninguno registrado — normal en esta PWA de un solo archivo','warn'); }
+  } catch(e){ setTestResult('tSW','✗ '+e.message,'err'); }
+}
+
+function testManifest() {
+  const link=document.getElementById('manifestLink');
+  if(link&&link.href){ setTestResult('tManifest','✓ Manifest enlazado — '+link.href.slice(0,50)+'…','ok'); }
+  else { setTestResult('tManifest','✗ Manifest no encontrado','err'); }
+}
+
+function testUA() {
+  setTestResult('tUA', navigator.userAgent, '');
+}
+
+function testLocalStorage() {
+  try {
+    const key='caskia_test_'+Date.now();
+    localStorage.setItem(key,'✓');
+    const val=localStorage.getItem(key);
+    localStorage.removeItem(key);
+    if(val==='✓'){ setTestResult('tLS','✓ localStorage funciona correctamente','ok'); }
+    else { setTestResult('tLS','⚠ localStorage disponible pero no consistente','warn'); }
+  } catch(e){ setTestResult('tLS','✗ '+e.message,'err'); }
+}
+
+function testHistorial() {
+  const n=history.length;
+  if(n===0){ setTestResult('tHistorial','ℹ Historial vacío — inicia una conversación en Chat','warn'); }
+  else { setTestResult('tHistorial',`✓ ${n} mensaje(s) en memoria — ${Math.round(JSON.stringify(history).length/1024*10)/10} KB aprox.`,'ok'); }
+}
+
+function testNetwork() {
+  const online=navigator.onLine;
+  const conn=navigator.connection;
+  let info=online?'✓ Online':'✗ Offline';
+  if(conn){ info+=` — tipo: ${conn.effectiveType||'—'}, downlink: ${conn.downlink||'—'} Mbps`; }
+  setTestResult('tNetwork',info, online?'ok':'err');
+}
+
+async function testFetchExterno() {
+  setTestResult('tFetchExt','probando…','warn');
+  try {
+    const t0=Date.now();
+    // HEAD request para no consumir tokens
+    const r=await fetch('https://api.mistral.ai',{method:'HEAD',signal:AbortSignal.timeout(5000)});
+    const ms=Date.now()-t0;
+    setTestResult('tFetchExt',`✓ api.mistral.ai alcanzable — ${ms}ms (HTTP ${r.status})`,'ok');
+  } catch(e){ setTestResult('tFetchExt','✗ No se puede alcanzar api.mistral.ai — '+e.message,'err'); }
+}
+
+function clearHistory() {
+  history = []; updateDebug();
+  const w = document.getElementById('welcomeMsg');
+  if(!w){ messagesEl.innerHTML=''; const d=document.createElement('div'); d.className='welcome'; d.id='welcomeMsg'; d.innerHTML='<div class="welcome-icon">✦</div><h2>Chat limpiado</h2><p>Puedes empezar una conversación nueva.</p>'; messagesEl.appendChild(d); }
+  toast('🗑 Historial borrado');
+}
+
+// ── MENSAJES CHAT ──
+function addMsg(role, text, source) {
+  const w = document.getElementById('welcomeMsg'); if(w) w.remove();
+  const div = document.createElement('div'); div.className = `msg ${role}`;
+  const src = source==='pc' ? '<span class="src pc">PC</span>' : source==='mistral' ? '<span class="src mistral">Mistral</span>' : '';
+  const time = new Date().toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit'});
+  div.innerHTML = `<div class="msg-meta">${role==='user'?time:src+' · '+time}</div><div class="msg-bubble">${text.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>`;
+  messagesEl.appendChild(div); messagesEl.scrollTop = messagesEl.scrollHeight; updateDebug();
+}
+function addTyping() { const d=document.createElement('div'); d.className='typing-wrap'; d.id='typing'; d.innerHTML='<div class="typing"><span></span><span></span><span></span></div>'; messagesEl.appendChild(d); messagesEl.scrollTop=messagesEl.scrollHeight; }
+function removeTyping() { document.getElementById('typing')?.remove(); }
+
+// ── ENVIAR ──
+async function send() {
+  const text = inputEl.value.trim(); if(!text||sending) return;
+  inputEl.value=''; inputEl.style.height='auto'; sending=true; btnSend.disabled=true;
+  addMsg('user',text); history.push({role:'user',content:text}); addTyping();
+  try {
+    let reply, source;
+    if (usandoPC && pcUrl && pcUrl !== 'http://simulado') {
+      try {
+        const r = await fetch(`${pcUrl}/chat`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mensaje:text}),signal:AbortSignal.timeout(60000)});
+        const d = await r.json(); reply=d.respuesta||d.error||'Sin respuesta'; source='pc';
+      } catch { usandoPC=false; pcWasOff=true; setStatus('offline'); reply=await callMistral(); source='mistral'; }
+    } else if (usandoPC && pcUrl === 'http://simulado') {
+      reply = '(Modo simulado PC) Echo: ' + text; source = 'pc';
+    } else {
+      reply = await callMistral(); source = 'mistral';
+    }
+    removeTyping(); history.push({role:'assistant',content:reply}); addMsg('ai',reply,source);
+  } catch(e) { removeTyping(); const d=document.createElement('div'); d.className='msg-err'; d.textContent='⚠ '+e.message; messagesEl.appendChild(d); messagesEl.scrollTop=messagesEl.scrollHeight; }
+  sending=false; btnSend.disabled=false; updateDebug();
+}
+
+async function callMistral() {
+  const r = await fetch('https://api.mistral.ai/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${MISTRAL_KEY}`},body:JSON.stringify({model:MISTRAL_MODEL,messages:history,max_tokens:1000,temperature:.7}),signal:AbortSignal.timeout(30000)});
+  const d = await r.json(); if(!r.ok) throw new Error(d?.message||`Error ${r.status}`); return d.choices[0].message.content;
+}
+
+inputEl.addEventListener('input',()=>{ inputEl.style.height='auto'; inputEl.style.height=Math.min(inputEl.scrollHeight,110)+'px'; });
+inputEl.addEventListener('keydown',e=>{ if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();} });
+btnSend.addEventListener('click',send);
+
+checkPC();
+setInterval(checkPC, 30000);
+updateDebug();
+updateInfo();
+</script>
+</body>
+</html>
